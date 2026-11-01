@@ -1,0 +1,14 @@
+{
+  "domain": "assist_failover",
+  "name": "Assist Failover",
+  "after_dependencies": ["wyoming"],
+  "codeowners": ["@Dave-J-W"],
+  "config_flow": true,
+  "dependencies": ["stt", "tts"],
+  "documentation": "https://github.com/Dave-J-W/ha-assist-failover",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Dave-J-W/ha-assist-failover/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

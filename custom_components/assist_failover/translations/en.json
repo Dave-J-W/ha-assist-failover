@@ -1,0 +1,51 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Assist Failover is already set up. Change its engines under Configure."
+    },
+    "error": {
+      "need_both": "Choose both a primary and a backup, or neither.",
+      "same_engine": "The backup must be a different engine.",
+      "nothing_chosen": "Choose at least one primary and backup pair."
+    },
+    "step": {
+      "user": {
+        "title": "Choose your engines",
+        "description": "Assist uses the primary, and switches to the backup whenever the primary can't answer. Use the same voice on both text-to-speech engines so a switch doesn't change how replies sound.",
+        "data": {
+          "stt_primary": "Speech-to-text primary",
+          "stt_backup": "Speech-to-text backup",
+          "tts_primary": "Text-to-speech primary",
+          "tts_backup": "Text-to-speech backup",
+          "primary_timeout": "Primary timeout"
+        },
+        "data_description": {
+          "primary_timeout": "How long a primary may take before Assist switches to the backup. Too short and a slow primary is abandoned for no gain."
+        }
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "need_both": "Choose both a primary and a backup, or neither.",
+      "same_engine": "The backup must be a different engine.",
+      "nothing_chosen": "Choose at least one primary and backup pair."
+    },
+    "step": {
+      "init": {
+        "title": "Choose your engines",
+        "description": "Assist uses the primary, and switches to the backup whenever the primary can't answer. Use the same voice on both text-to-speech engines so a switch doesn't change how replies sound.",
+        "data": {
+          "stt_primary": "Speech-to-text primary",
+          "stt_backup": "Speech-to-text backup",
+          "tts_primary": "Text-to-speech primary",
+          "tts_backup": "Text-to-speech backup",
+          "primary_timeout": "Primary timeout"
+        },
+        "data_description": {
+          "primary_timeout": "How long a primary may take before Assist switches to the backup. Too short and a slow primary is abandoned for no gain."
+        }
+      }
+    }
+  }
+}

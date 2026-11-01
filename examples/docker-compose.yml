@@ -1,0 +1,29 @@
+# Whisper and Piper on a machine with Docker. CPU only; add each to Home Assistant as a
+# Wyoming Protocol entry, using this machine's address and the ports below.
+# Give this machine a fixed address: Home Assistant stores it in the entry.
+name: voice
+
+services:
+  whisper:
+    container_name: whisper
+    image: rhasspy/wyoming-whisper:3.8.1
+    command: --model base-int8 --language en --beam-size 1 --cpu-threads 8
+    ports:
+      - "10300:10300"
+    volumes:
+      - whisper-data:/data
+    restart: unless-stopped
+
+  piper:
+    container_name: piper
+    image: rhasspy/wyoming-piper:2.5.2
+    command: --voice en_US-lessac-medium
+    ports:
+      - "10200:10200"
+    volumes:
+      - piper-data:/data
+    restart: unless-stopped
+
+volumes:
+  whisper-data:
+  piper-data:
