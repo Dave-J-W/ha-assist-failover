@@ -24,6 +24,7 @@ from .const import (
     REACHABLE_TIMEOUT,
     REVIVE_SECONDS,
 )
+from .logic import settings
 from .wyoming_direct import describe, parse_address
 
 _LOGGER = logging.getLogger(__name__)
@@ -121,7 +122,7 @@ def _primary(hass, config, address_key, entity_key):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    config = {**entry.data, **entry.options}
+    config = settings(entry)
     entry.runtime_data = {}
     for kind, address_key, entity_key in (
         (KIND_STT, CONF_STT_ADDRESS, CONF_STT_PRIMARY),

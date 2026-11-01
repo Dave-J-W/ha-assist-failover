@@ -5,14 +5,14 @@ import logging
 from homeassistant.components import stt
 
 from .const import BACKUP_TIMEOUT, CONF_PRIMARY_TIMEOUT, CONF_STT_BACKUP, DEFAULT_PRIMARY_TIMEOUT, KIND_STT
-from .logic import Attempt, first_answer
+from .logic import Attempt, first_answer, settings
 from .wyoming_direct import languages, transcribe
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    config = {**entry.data, **entry.options}
+    config = settings(entry)
     if KIND_STT in entry.runtime_data and config.get(CONF_STT_BACKUP):
         async_add_entities([FailoverStt(entry, config)])
 

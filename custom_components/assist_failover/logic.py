@@ -101,6 +101,11 @@ async def first_audio(data_gen):
     return chunks, stream
 
 
+def settings(entry):
+    """The options replace the first setup whole, or a cleared field would come back from it."""
+    return entry.options or entry.data
+
+
 def options_for(options, supported):
     """Keep only what this engine accepts, since two engines rarely take the same options."""
     return {name: value for name, value in options.items() if name in (supported or [])}

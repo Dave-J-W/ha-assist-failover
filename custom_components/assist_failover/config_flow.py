@@ -16,6 +16,7 @@ from .const import (
     DEFAULT_PRIMARY_TIMEOUT,
     DOMAIN,
 )
+from .logic import settings
 from .wyoming_direct import parse_address
 
 GROUPS = (
@@ -97,5 +98,5 @@ class AssistFailoverOptionsFlow(OptionsFlow):
         errors = _validate(user_input) if user_input is not None else {}
         if user_input is not None and not errors:
             return self.async_create_entry(data=user_input)
-        values = user_input or {**self.config_entry.data, **self.config_entry.options}
+        values = user_input or settings(self.config_entry)
         return self.async_show_form(step_id="init", data_schema=_schema(values), errors=errors)

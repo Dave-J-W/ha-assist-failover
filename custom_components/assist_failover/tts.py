@@ -8,7 +8,7 @@ from homeassistant.components.tts.helper import get_engine_instance
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import BACKUP_TIMEOUT, CONF_PRIMARY_TIMEOUT, CONF_TTS_BACKUP, DEFAULT_PRIMARY_TIMEOUT, KIND_TTS
-from .logic import Attempt, ReplayableText, first_answer, first_audio, options_for
+from .logic import Attempt, ReplayableText, first_answer, first_audio, options_for, settings
 from .wyoming_direct import languages, supports_streaming, synthesize, voices
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ DIRECT_OPTIONS = [tts.ATTR_VOICE, "speaker"]
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    config = {**entry.data, **entry.options}
+    config = settings(entry)
     if KIND_TTS in entry.runtime_data and config.get(CONF_TTS_BACKUP):
         async_add_entities([FailoverTts(entry, config)])
 
