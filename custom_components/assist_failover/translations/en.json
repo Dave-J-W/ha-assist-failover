@@ -4,6 +4,8 @@
       "already_configured": "Assist Failover is already set up. Change its engines under Configure."
     },
     "error": {
+      "bad_address": "Enter this as host:port, such as 192.168.1.20:10300.",
+      "address_or_entity": "Use a Wyoming address or an entity for the primary, not both.",
       "need_both": "Choose both a primary and a backup, or neither.",
       "same_engine": "The backup must be a different engine.",
       "nothing_chosen": "Choose at least one primary and backup pair."
@@ -11,11 +13,13 @@
     "step": {
       "user": {
         "title": "Choose your engines",
-        "description": "Assist uses the primary, and switches to the backup whenever the primary can't answer. Use the same voice on both text-to-speech engines so a switch doesn't change how replies sound.",
+        "description": "Assist uses the primary, and switches to the backup whenever the primary can't answer. For a Wyoming primary on a machine that can be off, enter its address here and don't add it as a Wyoming entry: an entry can stall Home Assistant's startup for 5 minutes while that machine is away. Use the same voice on both text-to-speech engines so a switch doesn't change how replies sound.",
         "data": {
-          "stt_primary": "Speech-to-text primary",
+          "stt_primary_address": "Speech-to-text primary: Wyoming address",
+          "stt_primary": "Speech-to-text primary: or an entity",
           "stt_backup": "Speech-to-text backup",
-          "tts_primary": "Text-to-speech primary",
+          "tts_primary_address": "Text-to-speech primary: Wyoming address",
+          "tts_primary": "Text-to-speech primary: or an entity",
           "tts_backup": "Text-to-speech backup",
           "primary_timeout": "Primary timeout"
         },
@@ -27,6 +31,8 @@
   },
   "options": {
     "error": {
+      "bad_address": "Enter this as host:port, such as 192.168.1.20:10300.",
+      "address_or_entity": "Use a Wyoming address or an entity for the primary, not both.",
       "need_both": "Choose both a primary and a backup, or neither.",
       "same_engine": "The backup must be a different engine.",
       "nothing_chosen": "Choose at least one primary and backup pair."
@@ -34,11 +40,13 @@
     "step": {
       "init": {
         "title": "Choose your engines",
-        "description": "Assist uses the primary, and switches to the backup whenever the primary can't answer. Use the same voice on both text-to-speech engines so a switch doesn't change how replies sound.",
+        "description": "Assist uses the primary, and switches to the backup whenever the primary can't answer. For a Wyoming primary on a machine that can be off, enter its address here and don't add it as a Wyoming entry: an entry can stall Home Assistant's startup for 5 minutes while that machine is away. Use the same voice on both text-to-speech engines so a switch doesn't change how replies sound.",
         "data": {
-          "stt_primary": "Speech-to-text primary",
+          "stt_primary_address": "Speech-to-text primary: Wyoming address",
+          "stt_primary": "Speech-to-text primary: or an entity",
           "stt_backup": "Speech-to-text backup",
-          "tts_primary": "Text-to-speech primary",
+          "tts_primary_address": "Text-to-speech primary: Wyoming address",
+          "tts_primary": "Text-to-speech primary: or an entity",
           "tts_backup": "Text-to-speech backup",
           "primary_timeout": "Primary timeout"
         },

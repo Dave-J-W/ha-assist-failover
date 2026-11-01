@@ -2,6 +2,8 @@
 
 DOMAIN = "assist_failover"
 
+CONF_STT_ADDRESS = "stt_primary_address"
+CONF_TTS_ADDRESS = "tts_primary_address"
 CONF_STT_PRIMARY = "stt_primary"
 CONF_STT_BACKUP = "stt_backup"
 CONF_TTS_PRIMARY = "tts_primary"

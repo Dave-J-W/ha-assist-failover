@@ -1,4 +1,4 @@
-"""logic.py: which engine answers, what makes it move on, and what counts as alive."""
+"""logic.py: which engine answers and what makes it move on."""
 
 import asyncio
 import importlib.util
@@ -157,50 +157,6 @@ class OptionsFor(unittest.TestCase):
 
     def test_engine_with_no_options(self):
         self.assertEqual(L.options_for({"voice": "v"}, None), {})
-
-
-class ServerAlive(unittest.TestCase):
-    def check(self, reply, timeout=0.5):
-        async def run():
-            async def handle(reader, writer):
-                await reader.readline()
-                if reply is not None:
-                    writer.write(reply)
-                    await writer.drain()
-                    writer.close()
-                else:
-                    await asyncio.sleep(5)
-
-            server = await asyncio.start_server(handle, "127.0.0.1", 0)
-            port = server.sockets[0].getsockname()[1]
-            alive = await L.server_alive("127.0.0.1", port, timeout)
-            server.close()
-            return alive
-        return asyncio.run(run())
-
-    def test_info_reply_is_alive(self):
-        self.assertTrue(self.check(b'{"type": "info", "data_length": 2}\n{}'))
-
-    def test_a_very_long_info_line_is_still_alive(self):
-        self.assertTrue(self.check(b'{"type": "info", "pad": "' + b"x" * 200000 + b'"}\n'))
-
-    def test_open_port_that_says_something_else_is_not(self):
-        self.assertFalse(self.check(b'{"type": "error"}\n'))
-        self.assertFalse(self.check(b'not json\n'))
-        self.assertFalse(self.check(b'[1]\n'))
-        self.assertFalse(self.check(b''))
-
-    def test_silent_server_times_out(self):
-        self.assertFalse(self.check(None, timeout=0.05))
-
-    def test_closed_port_is_not_alive(self):
-        async def run():
-            server = await asyncio.start_server(lambda r, w: None, "127.0.0.1", 0)
-            port = server.sockets[0].getsockname()[1]
-            server.close()
-            await server.wait_closed()
-            return await L.server_alive("127.0.0.1", port, 0.5)
-        self.assertFalse(asyncio.run(run()))
 
 
 if __name__ == "__main__":

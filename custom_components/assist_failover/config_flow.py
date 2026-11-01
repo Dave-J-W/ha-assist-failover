@@ -7,58 +7,70 @@ import voluptuous as vol
 
 from .const import (
     CONF_PRIMARY_TIMEOUT,
+    CONF_STT_ADDRESS,
     CONF_STT_BACKUP,
     CONF_STT_PRIMARY,
+    CONF_TTS_ADDRESS,
     CONF_TTS_BACKUP,
     CONF_TTS_PRIMARY,
     DEFAULT_PRIMARY_TIMEOUT,
     DOMAIN,
 )
+from .wyoming_direct import parse_address
 
-PAIRS = ((CONF_STT_PRIMARY, CONF_STT_BACKUP), (CONF_TTS_PRIMARY, CONF_TTS_BACKUP))
+GROUPS = (
+    (CONF_STT_ADDRESS, CONF_STT_PRIMARY, CONF_STT_BACKUP),
+    (CONF_TTS_ADDRESS, CONF_TTS_PRIMARY, CONF_TTS_BACKUP),
+)
 
 
 def _schema(values):
-    def engine(key, domain):
-        field = vol.Optional(key, description={"suggested_value": values.get(key)})
-        return field, selector.EntitySelector(selector.EntitySelectorConfig(domain=domain))
+    def optional(key):
+        return vol.Optional(key, description={"suggested_value": values.get(key)})
 
+    def engine(domain):
+        return selector.EntitySelector(selector.EntitySelectorConfig(domain=domain))
+
+    text = selector.TextSelector()
     return vol.Schema(
-        dict(
-            [
-                engine(CONF_STT_PRIMARY, "stt"),
-                engine(CONF_STT_BACKUP, "stt"),
-                engine(CONF_TTS_PRIMARY, "tts"),
-                engine(CONF_TTS_BACKUP, "tts"),
-                (
-                    vol.Required(
-                        CONF_PRIMARY_TIMEOUT,
-                        default=values.get(CONF_PRIMARY_TIMEOUT, DEFAULT_PRIMARY_TIMEOUT),
-                    ),
-                    selector.NumberSelector(
-                        selector.NumberSelectorConfig(
-                            min=1,
-                            max=60,
-                            step=1,
-                            unit_of_measurement="s",
-                            mode=selector.NumberSelectorMode.BOX,
-                        )
-                    ),
-                ),
-            ]
-        )
+        {
+            optional(CONF_STT_ADDRESS): text,
+            optional(CONF_STT_PRIMARY): engine("stt"),
+            optional(CONF_STT_BACKUP): engine("stt"),
+            optional(CONF_TTS_ADDRESS): text,
+            optional(CONF_TTS_PRIMARY): engine("tts"),
+            optional(CONF_TTS_BACKUP): engine("tts"),
+            vol.Required(
+                CONF_PRIMARY_TIMEOUT,
+                default=values.get(CONF_PRIMARY_TIMEOUT, DEFAULT_PRIMARY_TIMEOUT),
+            ): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=1,
+                    max=60,
+                    step=1,
+                    unit_of_measurement="s",
+                    mode=selector.NumberSelectorMode.BOX,
+                )
+            ),
+        }
     )
 
 
 def _validate(values):
     errors = {}
-    for primary, backup in PAIRS:
-        first, second = values.get(primary), values.get(backup)
-        if bool(first) != bool(second):
-            errors[backup if first else primary] = "need_both"
-        elif first and first == second:
-            errors[backup] = "same_engine"
-    if not errors and not any(values.get(primary) for primary, _ in PAIRS):
+    chosen = False
+    for address_key, primary_key, backup_key in GROUPS:
+        address, primary, backup = values.get(address_key), values.get(primary_key), values.get(backup_key)
+        if address and parse_address(address) is None:
+            errors[address_key] = "bad_address"
+        elif address and primary:
+            errors[primary_key] = "address_or_entity"
+        elif bool(address or primary) != bool(backup):
+            errors[backup_key if address or primary else primary_key] = "need_both"
+        elif primary and primary == backup:
+            errors[backup_key] = "same_engine"
+        chosen = chosen or bool(backup)
+    if not errors and not chosen:
         errors["base"] = "nothing_chosen"
     return errors
 

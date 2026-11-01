@@ -2,34 +2,12 @@
 
 import asyncio
 from dataclasses import dataclass, field
-import json
 import time
 from typing import Any
 
 # A Wyoming WAV stream sends its header before any audio, and a header alone proves nothing.
 # 44 bytes is a plain WAV header; anything this small is not speech.
 HEADER_ONLY_BYTES = 128
-
-# A Wyoming server's info can list thousands of voices; the first line is all we read.
-READ_LIMIT = 2**20
-
-
-async def server_alive(host, port, timeout):
-    """Ask a Wyoming server to describe itself. An open port alone doesn't prove the engine is up."""
-
-    async def ask():
-        reader, writer = await asyncio.open_connection(host, port, limit=READ_LIMIT)
-        try:
-            writer.write(b'{"type": "describe"}\n')
-            await writer.drain()
-            return json.loads(await reader.readline()).get("type") == "info"
-        finally:
-            writer.close()
-
-    try:
-        return await asyncio.wait_for(ask(), timeout)
-    except (OSError, ValueError, AttributeError, asyncio.TimeoutError):
-        return False
 
 
 @dataclass

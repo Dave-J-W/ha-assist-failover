@@ -18,7 +18,9 @@ Assist Failover adds one speech-to-text entity and one text-to-speech entity to 
 
 A Wyoming primary gets a heartbeat every 10 seconds. It asks the service to describe itself, so an open port with a dead engine behind it counts as down. It returns to the primary by itself on the next good heartbeat.
 
-Any `stt` or `tts` entity can be used, but only Wyoming primaries get a heartbeat and a status sensor. Others are found to be down by trying them.
+The primary can be a Wyoming server's address or any `stt` or `tts` entity. Backups are always entities. Only Wyoming primaries get a heartbeat and a status sensor; other kinds are found to be down by trying them.
+
+**Use an address for a primary on a machine that can be off, and don't also add it as a Wyoming entry.** Home Assistant's Wyoming setup connects with no timeout. If that machine drops packets while Home Assistant starts, as a sleeping PC or a firewall can, startup stalled for 5 minutes in testing and the entry ended in `setup_error`. With an address, Assist Failover talks to the server itself, and Home Assistant starts normally.
 
 ## Measured
 
@@ -34,8 +36,8 @@ One Raspberry Pi 4 against one Ryzen 3950X desktop, CPU only, on the same networ
 
 1. In HACS, open the menu, choose **Custom repositories**, and add this repository as an **Integration**.
 2. Download **Assist Failover**, then restart Home Assistant.
-3. Add your engines. For Wyoming, that's one **Wyoming Protocol** entry each for the fast machine and the backup. [`examples/docker-compose.yml`](examples/docker-compose.yml) starts Whisper and Piper on a machine with Docker.
-4. Go to **Settings > Devices & services > Add integration > Assist Failover**, and choose a primary and backup for speech to text, text to speech, or both.
+3. Start your fast engines. [`examples/docker-compose.yml`](examples/docker-compose.yml) starts Whisper and Piper on a machine with Docker. Your backups are normal entities, such as the Whisper and Piper add-ons.
+4. Go to **Settings > Devices & services > Add integration > Assist Failover**. For speech to text, text to speech, or both, enter the primary's address as `host:port` and choose a backup.
 5. Go to **Settings > Voice assistants**, open your assistant, and choose **Assist Failover STT** and **Assist Failover TTS** as its engines.
 
 Use the same voice on both text-to-speech engines, or replies will change voice when it switches. Pick your assistant's voice by the name both engines know, such as `en_US-lessac-medium`.
@@ -61,7 +63,7 @@ Each switch logs a warning naming the engine and the reason.
 
 ## Testing
 
-`tests/` covers the switching logic with no Home Assistant needed (`python -m unittest discover -s tests -t .`). The entities and config flow have no automated tests; they've been tested by hand on one Home Assistant 2026.10.4 install, with stopped and hung containers but not yet with a machine that's really asleep. [`docs/self-hosted-voice-notes.md`](docs/self-hosted-voice-notes.md) records how, and what else was learned along the way.
+`tests/` covers the switching logic and the Wyoming client against a fake server, with no Home Assistant needed (`python -m unittest discover -s tests -t .`). The entities and config flow have no automated tests; they've been tested by hand on one Home Assistant 2026.10.4 install, with stopped and hung containers but not yet with a machine that's really asleep. [`docs/self-hosted-voice-notes.md`](docs/self-hosted-voice-notes.md) records how, and what else was learned along the way.
 
 ## License
 

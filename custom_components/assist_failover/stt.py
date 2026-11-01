@@ -4,22 +4,16 @@ import logging
 
 from homeassistant.components import stt
 
-from .const import (
-    BACKUP_TIMEOUT,
-    CONF_PRIMARY_TIMEOUT,
-    CONF_STT_BACKUP,
-    CONF_STT_PRIMARY,
-    DEFAULT_PRIMARY_TIMEOUT,
-    KIND_STT,
-)
+from .const import BACKUP_TIMEOUT, CONF_PRIMARY_TIMEOUT, CONF_STT_BACKUP, DEFAULT_PRIMARY_TIMEOUT, KIND_STT
 from .logic import Attempt, first_answer
+from .wyoming_direct import languages, transcribe
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
     config = {**entry.data, **entry.options}
-    if config.get(CONF_STT_PRIMARY) and config.get(CONF_STT_BACKUP):
+    if KIND_STT in entry.runtime_data and config.get(CONF_STT_BACKUP):
         async_add_entities([FailoverStt(entry, config)])
 
 
@@ -38,24 +32,25 @@ class FailoverStt(stt.SpeechToTextEntity):
     _attr_name = "Assist Failover STT"
 
     def __init__(self, entry, config):
-        self._primary = config[CONF_STT_PRIMARY]
+        self._primary = entry.runtime_data[KIND_STT]
         self._backup = config[CONF_STT_BACKUP]
         self._timeout = config.get(CONF_PRIMARY_TIMEOUT, DEFAULT_PRIMARY_TIMEOUT)
-        self._heartbeat = entry.runtime_data[KIND_STT]
         self._attr_unique_id = f"{entry.entry_id}-stt"
         self._attr_extra_state_attributes = {}
 
-    def _engines(self):
-        found = (
-            stt.async_get_speech_to_text_entity(self.hass, entity_id)
-            for entity_id in (self._primary, self._backup)
-        )
-        return [engine for engine in found if engine is not None]
+    def _entity(self, entity_id):
+        return stt.async_get_speech_to_text_entity(self.hass, entity_id)
+
+    def _entities(self):
+        ids = [self._backup] if self._primary.direct else [self._primary.entity_id, self._backup]
+        return [engine for engine in map(self._entity, ids) if engine is not None]
 
     @property
     def supported_languages(self):
-        languages = {lang for engine in self._engines() for lang in engine.supported_languages}
-        return sorted(languages) or [self.hass.config.language]
+        found = languages(self._primary.info, "asr")
+        for engine in self._entities():
+            found.update(engine.supported_languages)
+        return sorted(found) or [self.hass.config.language]
 
     @property
     def supported_formats(self):
@@ -79,12 +74,12 @@ class FailoverStt(stt.SpeechToTextEntity):
 
     @property
     def audio_processing(self):
-        engines = self._engines()
+        engines = self._entities()
         return engines[0].audio_processing if engines else super().audio_processing
 
-    def _runner(self, entity_id, metadata, chunks):
+    def _entity_runner(self, entity_id, metadata, chunks):
         async def run():
-            engine = stt.async_get_speech_to_text_entity(self.hass, entity_id)
+            engine = self._entity(entity_id)
             if engine is None:
                 raise LookupError(f"{entity_id} is not loaded")
             result = await engine.internal_async_process_audio_stream(metadata, _replay(chunks))
@@ -94,12 +89,21 @@ class FailoverStt(stt.SpeechToTextEntity):
 
         return run
 
+    def _primary_runner(self, metadata, chunks):
+        if not self._primary.direct:
+            return self._entity_runner(self._primary.entity_id, metadata, chunks)
+
+        async def run():
+            return await transcribe(*self._primary.address, metadata.language, chunks)
+
+        return run
+
     async def async_process_audio_stream(self, metadata, stream):
         chunks = [chunk async for chunk in stream]
         outcome = await first_answer(
             [
-                Attempt(self._primary, self._runner(self._primary, metadata, chunks), self._timeout, self._heartbeat.reachable),
-                Attempt(self._backup, self._runner(self._backup, metadata, chunks), BACKUP_TIMEOUT),
+                Attempt(self._primary.name, self._primary_runner(metadata, chunks), self._timeout, self._primary.reachable),
+                Attempt(self._backup, self._entity_runner(self._backup, metadata, chunks), BACKUP_TIMEOUT),
             ]
         )
         if outcome.failures:
