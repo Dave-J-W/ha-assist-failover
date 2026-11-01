@@ -46,6 +46,10 @@ What was learned building this, written so the next person or agent doesn't have
 - **Keep model caches in a named volume** rather than a mounted drive, so a problem with the drive doesn't take voice down.
 - **Pin image versions.** Use the same Piper voice as the backup, and `rhasspy/wyoming-piper:2.5.2` downloads it on first start.
 
+## Working on a live install
+
+- **Don't search `.storage/core.config_entries`.** It's one long line per entry, holding integrations' passwords and tokens, so a `grep` for one entry can print everyone's. Use `GET /api/config/config_entries/entry`, which leaves those out. This happened while building this.
+
 ## Testing it
 
 The checks that proved something:
@@ -60,14 +64,16 @@ The checks that proved something:
 8. A real `assist_satellite.announce`, which goes through the pipeline's text to speech. `last_engine` shows who made it.
 9. A real voice turn on the satellite. Generated speech doesn't stand in for this.
 
-Results on one install, with a 1.6 s test clip and a short reply. Speech to text is the whole request; text to speech is the time to first byte:
+Results on one install, with address primaries, a 1.6 s test clip and a short reply. Speech to text is the whole request; text to speech is the time to first byte:
 
 | Case | Speech to text | Text to speech |
 |---|---|---|
-| Primary up | 0.57-0.59 s | 0.28-0.32 s |
-| Just stopped, heartbeat hadn't noticed | 3.5 s, backup | 2.8 s, backup |
-| Stopped, heartbeat knows | 2.3 s, backup | 1.4-1.7 s, backup |
-| Just paused (hung) | 10.3 s, backup | 9.6 s, backup |
-| Back after a stop or pause | Primary again within 8 s | Primary again within 8 s |
+| Primary up | 0.52-0.58 s | 0.30-0.35 s |
+| Just stopped, heartbeat hadn't noticed | 3.4 s, backup | 2.4 s, backup |
+| Stopped, heartbeat knows | 2.4 s, backup | 1.3-1.9 s, backup |
+| Just paused (hung) | 10.4 s, backup | 9.5 s, backup |
+| Back after a stop or pause | Primary again within 11 s | Primary again within 11 s |
+
+Home Assistant's own startup, primaries stopped: 5.6 minutes with Wyoming entries, then 87 s with addresses, about the same as a normal restart here.
 
 Not tested: a primary machine that's really off or asleep (only containers were stopped or paused), and a primary that dies partway through a reply.
