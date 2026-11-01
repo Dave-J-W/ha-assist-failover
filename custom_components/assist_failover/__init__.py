@@ -4,20 +4,23 @@ import asyncio
 from datetime import timedelta
 import logging
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import (
+    CONF_STT_BACKUP,
     CONF_STT_PRIMARY,
+    CONF_TTS_BACKUP,
     CONF_TTS_PRIMARY,
     HEARTBEAT_SECONDS,
     HEARTBEAT_TIMEOUT,
     KIND_STT,
     KIND_TTS,
     REACHABLE_TIMEOUT,
+    REVIVE_SECONDS,
 )
 from .logic import server_alive
 
@@ -26,15 +29,38 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.STT, Platform.TTS]
 
 
-def wyoming_address(hass: HomeAssistant, entity_id: str):
-    """Return (host, port) if this engine is a Wyoming service, else None."""
+def wyoming_entry(hass: HomeAssistant, entity_id: str):
+    """Return this engine's Wyoming config entry, or None. Works while the entry is down."""
     entity = er.async_get(hass).async_get(entity_id)
     if entity is None or entity.config_entry_id is None:
         return None
     entry = hass.config_entries.async_get_entry(entity.config_entry_id)
-    if entry is None or entry.domain != "wyoming":
-        return None
-    return entry.data["host"], entry.data["port"]
+    return entry if entry is not None and entry.domain == "wyoming" else None
+
+
+def wyoming_address(hass: HomeAssistant, entity_id: str):
+    """Return (host, port) if this engine is a Wyoming service, else None."""
+    entry = wyoming_entry(hass, entity_id)
+    return (entry.data["host"], entry.data["port"]) if entry is not None else None
+
+
+async def _revive_engines(hass: HomeAssistant, entity_ids) -> None:
+    """Reload a Wyoming entry whose service is back.
+
+    A service that's away while Home Assistant starts can leave its entry in setup_error,
+    and nothing retries that. Without this the engine stays gone until someone reloads it.
+    """
+    for entity_id in entity_ids:
+        entry = wyoming_entry(hass, entity_id)
+        if (
+            entry is None
+            or entry.disabled_by is not None
+            or entry.state not in (ConfigEntryState.SETUP_ERROR, ConfigEntryState.SETUP_RETRY)
+        ):
+            continue
+        if await server_alive(entry.data["host"], entry.data["port"], HEARTBEAT_TIMEOUT):
+            _LOGGER.info("Reloading %s, because its service is back", entity_id)
+            await hass.config_entries.async_reload(entry.entry_id)
 
 
 class Heartbeat:
@@ -89,6 +115,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 async_track_time_interval(hass, heartbeat.beat, timedelta(seconds=HEARTBEAT_SECONDS))
             )
             entry.runtime_data[kind] = heartbeat
+
+    engines = [
+        config[key]
+        for key in (CONF_STT_PRIMARY, CONF_STT_BACKUP, CONF_TTS_PRIMARY, CONF_TTS_BACKUP)
+        if config.get(key)
+    ]
+
+    async def revive(_now):
+        await _revive_engines(hass, engines)
+
+    entry.async_on_unload(
+        async_track_time_interval(hass, revive, timedelta(seconds=REVIVE_SECONDS))
+    )
     entry.async_on_unload(entry.add_update_listener(_reload))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

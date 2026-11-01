@@ -1,7 +1,6 @@
 {
   "domain": "assist_failover",
   "name": "Assist Failover",
-  "after_dependencies": ["wyoming"],
   "codeowners": ["@Dave-J-W"],
   "config_flow": true,
   "dependencies": ["stt", "tts"],

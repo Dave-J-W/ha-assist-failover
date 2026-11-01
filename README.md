@@ -27,7 +27,7 @@ One Raspberry Pi 4 against one Ryzen 3950X desktop, CPU only, on the same networ
 | Engine | Pi 4 | Desktop |
 |---|---|---|
 | Whisper, a 1.6 s phrase | 2.4 s (`tiny-int8`) | 0.5 s (`base-int8`) |
-| Piper, first audio of a short reply | 1.3 s | 0.2 s |
+| Piper, first audio of a short reply | 1.3 s | 0.2 s (0.3 s through this integration) |
 | Piper, first audio of one long sentence | 2.4 s | 0.35 s |
 
 ## Install
@@ -61,7 +61,7 @@ Each switch logs a warning naming the engine and the reason.
 
 ## Testing
 
-`tests/` covers the switching logic with no Home Assistant needed (`python -m unittest discover -s tests -t .`). The entities and config flow have no automated tests; they've been tested by hand on one Home Assistant 2026.10.4 install. [`docs/self-hosted-voice-notes.md`](docs/self-hosted-voice-notes.md) records how, and what else was learned along the way.
+`tests/` covers the switching logic with no Home Assistant needed (`python -m unittest discover -s tests -t .`). The entities and config flow have no automated tests; they've been tested by hand on one Home Assistant 2026.10.4 install, with stopped and hung containers but not yet with a machine that's really asleep. [`docs/self-hosted-voice-notes.md`](docs/self-hosted-voice-notes.md) records how, and what else was learned along the way.
 
 ## License
 

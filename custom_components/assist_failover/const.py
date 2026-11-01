@@ -15,6 +15,7 @@ DEFAULT_PRIMARY_TIMEOUT = 8
 HEARTBEAT_SECONDS = 10
 HEARTBEAT_TIMEOUT = 2.0
 REACHABLE_TIMEOUT = 1.0
+REVIVE_SECONDS = 30
 
 # The backup is the last resort, so it gets as long as a slow machine could need.
 BACKUP_TIMEOUT = 60.0
